@@ -7,11 +7,12 @@ import glob
 from tabulate import tabulate
 from scipy.optimize import curve_fit
 
+#subroutine to calculate if an element is neutron rich or neutron deficient based on a fit on stable isotopes
 def func(x, a, b, c):
      return a*x**2. + b*x + c
 
 
-
+#subroutine to calculate Q-values
 def calculate_Qvalues(reaction_proj,reaction_product,name,i,j,df):
     #constants
     alpha_mass=4.00260325413
@@ -62,7 +63,7 @@ def calculate_Qvalues(reaction_proj,reaction_product,name,i,j,df):
 
 MeV=931.49432
 lformat=ff.FortranRecordReader('a1,i3,i5,i5,i5,1x,a3,a4,1x,a13,a11,a11,a9,1x,a2,a11,a9,1x,i3,1x,a12,a11')
-file1 = open('/Users/stynikas/Data/mass16.txt', 'r')
+file1 = open('mass16.txt', 'r')
 count = 0
 AME16=[]
 while True:
@@ -74,7 +75,7 @@ while True:
     if not line:
         break
 file1.close()
-file2 = open('/Users/stynikas/Data/mass20.txt','r')
+file2 = open('mass20.txt','r')
 lformat=ff.FortranRecordReader('a1,i3,i5,i5,i5,1x,a3,a4,1x,a14,a12,a13,1x,a10,1x,a2,a13,a11,1x,i3,1x,a13,a12')
 count = 0
 AME20=[]
@@ -95,7 +96,7 @@ A_HFB3D=Z_HFB3D+N_HFB3D
 Z_FRDM2012,N_FRDM2012,A_FRDM2012 ,mass_excess_FRDM2012=np.loadtxt('FRDM2012.txt',usecols=(0,1,2,14),unpack=True,skiprows=39)
 
 
-files=glob.glob("/Users/stynikas/Downloads/talys/structure/masses/moller/*")
+files=glob.glob("moller/*")
 FRDM=[]
 for filename in files:
     file1 = open(filename, 'r')
@@ -105,7 +106,7 @@ for filename in files:
 FRDM = np.array(FRDM)
 
 
-files=glob.glob("/Users/stynikas/Downloads/talys/structure/masses/hfbd1m/*")
+files=glob.glob("hfbd1m/*")
 HFBD1m_A=[]
 HFBD1m_Z=[]
 HFBD1m_ME=[]
@@ -120,7 +121,7 @@ HFBD1m_Z = np.array(HFBD1m_Z)
 HFBD1m_A = np.array(HFBD1m_A)
 HFBD1m_ME = np.array(HFBD1m_ME)
 
-files=glob.glob("/Users/stynikas/Downloads/talys/structure/masses/hfb/*")
+files=glob.glob("hfb/*")
 HFB_A=[]
 HFB_Z=[]
 HFB_ME=[]
@@ -311,8 +312,7 @@ for Z_num in range (0,110):
 
     print(Z_num)
 
-df.to_pickle('Database_complete_updated.pkl')    #to save the dataframe, df to 123.pkl
-#print(tabulate(df[['Z', 'A','mass_excess_AME20','mass_excess_FRDM12','ag_FRDM12','g2n_HFB_3d','g2n_FRDM','g2n_FRDM12','mass_excess_HFB_3d','mass_HFB_3d','an_HFB_3d','ag_HFB_3d','mass_excess_FRDM','mass_excess_AME20']],tablefmt = 'psql'))
+df.to_pickle('Database_complete_updated.pkl')    #to save the dataframe, df to xxxxx.pkl file. See the pickle to csv to convert to a csv
 print(tabulate(df[['Z','A','mass_excess_AME16','mass_excess_AME20','g2n_AME20','reaction_unc_g2n_AME20','mass_excess_FRDM','mass_excess_FRDM12','mass_excess_HFB_D1m','mass_excess_HFB_Skyrme','mass_excess_HFB_3d']],tablefmt = 'psql'))
 
 
