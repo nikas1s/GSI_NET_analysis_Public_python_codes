@@ -18,10 +18,12 @@ def calculate_Qvalues(reaction_proj,reaction_product,name,i,j,df):
     MeV=931.49432
     models=['I261','I261plusAME20']
     for model in models:
+        #assign the variable names
         name='{}{}_{}'.format(reaction_proj,reaction_product,model)
         mass='mass_{}'.format(model)
         reaction_unc='reaction_unc_{}{}_{}'.format(reaction_proj,reaction_product,model)
         try:
+            #do the calculation of q value
             if pd.isna(df[mass][i])==True:
                 mass='mass_AME20'
 
@@ -72,7 +74,7 @@ proton_mass=1.00782503224
 MeV=931.49432
 
 #load the experimental data
-data=pd.read_excel('/Users/stynikas/Python_codes/Marjut_final_Rh_Ru_Nb_Y_Zr_Mo/Published_masses_I261.xlsx', index_col=None, header=0)
+data=pd.read_excel('Published_masses_I261.xlsx', index_col=None, header=0)
 #move to an array representation
 Z_I261 = data["Z"].to_numpy()
 A_I261 = data["A"].to_numpy()
@@ -106,12 +108,10 @@ for i in range (0,len(Z_I261)):
     df.loc[(df.Z == int(Z_I261[i])) & (df.A == int(A_I261[i])), 'uncertainty_I261'] = sME_I261[i]
     df.loc[(df.Z == int(Z_I261[i])) & (df.A == int(A_I261[i])), 'mass_excess_I261plusAME20'] = ME_I261[i]
     df.loc[(df.Z == int(Z_I261[i])) & (df.A == int(A_I261[i])), 'uncertainty_I261plusAME20'] = sME_I261[i]    
-#print(tabulate(df[['Z','A','mass_excess_AME16','mass_excess_AME20','g2n_AME20','reaction_unc_g2n_AME20','mass_excess_FRDM','mass_excess_FRDM12','mass_excess_HFB_D1m','mass_excess_HFB_Skyrme','mass_excess_HFB_3d']],tablefmt = 'psql'))
-#print (tabulate(df.loc[(df.mass_excess_I261 != 'nan'), 'Z']))
+
 df["mass_excess_I261"].astype(float)
 df.loc[(df.mass_excess_I261 != 'nan'),'mass_I261']= df["A"].astype(float)+(df["mass_excess_I261"].astype(float)/MeV)
 df.loc[(df.mass_excess_I261 != 'nan'),'mass_I261plusAME20']= df["A"].astype(float)+(df["mass_excess_I261"].astype(float)/MeV)
-#result_df= df[pd.isna(df['mass_excess_I261'])==False]
 
 for Z_num in range (0,110):
     print(Z_num)
@@ -179,8 +179,8 @@ for Z_num in range (0,110):
             if j.size!=0:
                 j=int(j[0])
                 df=calculate_Qvalues('g','2n','g2n',i,j,df)
+#some test cases comment to remove
 result_df= df[pd.isna(df['mass_excess_I261'])==False]
-#print (tabulate(result_df[['Z','A','mass_excess_I261','uncertainty_I261','uncertainty_AME20','ng_I261','ng_AME20','reaction_unc_ng_I261','reaction_unc_ng_AME20']]))
 result_df = df[df['Z']==45]
 print('Z','A','mass_excess_I261','mass_excess_AME20','mass_excess_I261plusAME20','uncertainty_I261','uncertainty_AME20','uncertainty_I261plusAME20','ng_I261','ng_AME20','ng_I261plusAME20','reaction_unc_ng_I261','reaction_unc_ng_AME20','reaction_unc_ng_I261plusAME20')
 print (tabulate(result_df[['Z','A','mass_excess_I261','mass_excess_AME20','mass_excess_I261plusAME20','uncertainty_I261','uncertainty_AME20','uncertainty_I261plusAME20','ng_I261','ng_AME20','ng_I261plusAME20','reaction_unc_ng_I261','reaction_unc_ng_AME20','reaction_unc_ng_I261plusAME20']]))
