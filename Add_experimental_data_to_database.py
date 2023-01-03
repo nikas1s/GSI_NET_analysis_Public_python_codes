@@ -75,7 +75,7 @@ MeV=931.49432
 
 #load the experimental data
 data=pd.read_excel('Published_masses_I261.xlsx', index_col=None, header=0)
-#move to an array representation
+#move to an array representation so we can use data easier for calculations
 Z_I261 = data["Z"].to_numpy()
 A_I261 = data["A"].to_numpy()
 ME_I261 = data["ME(JYFLTRAP)"].to_numpy()/1000.

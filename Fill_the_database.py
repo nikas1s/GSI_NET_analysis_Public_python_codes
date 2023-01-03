@@ -12,7 +12,7 @@ def func(x, a, b, c):
      return a*x**2. + b*x + c
 
 
-#subroutine to calculate Q-values
+#subroutine to calculate Q-values (released energy via reactions)
 def calculate_Qvalues(reaction_proj,reaction_product,name,i,j,df):
     #constants
     alpha_mass=4.00260325413
@@ -62,8 +62,10 @@ def calculate_Qvalues(reaction_proj,reaction_product,name,i,j,df):
 
 
 MeV=931.49432
+#use Fortran format to read the file mass16 containing AM16 data
 lformat=ff.FortranRecordReader('a1,i3,i5,i5,i5,1x,a3,a4,1x,a13,a11,a11,a9,1x,a2,a11,a9,1x,i3,1x,a12,a11')
 file1 = open('mass16.txt', 'r')
+#count helps to skip empty lines 
 count = 0
 AME16=[]
 while True:
@@ -76,7 +78,9 @@ while True:
         break
 file1.close()
 file2 = open('mass20.txt','r')
+#use Fortran format to read the file mass16 containing AM20 data
 lformat=ff.FortranRecordReader('a1,i3,i5,i5,i5,1x,a3,a4,1x,a14,a12,a13,1x,a10,1x,a2,a13,a11,1x,i3,1x,a13,a12')
+#count helps to skip empty lines 
 count = 0
 AME20=[]
 while True:
@@ -89,7 +93,7 @@ while True:
         break
 file2.close()
 
-
+#load the rest mass tables
 Z_HFB3D,N_HFB3D,mass_excess_HFB3D=np.loadtxt('HFB_3d.dat',usecols=(0,1,3),unpack=True,skiprows=1)
 A_HFB3D=Z_HFB3D+N_HFB3D
 
@@ -204,6 +208,7 @@ for i in range (0,len(AME20)):
 
 
 df["neutron_rich"]="nan"
+#find the elements that are not nan and calculate mass for them
 df.loc[(df.mass_excess_HFB_D1m != 'nan'),'mass_HFB_D1m']= df["A"].astype(float)+(df["mass_excess_HFB_D1m"].astype(float)/MeV)
 df.loc[(df.mass_excess_HFB_Skyrme != 'nan'),'mass_HFB_Skyrme']= df["A"].astype(float)+(df["mass_excess_HFB_Skyrme"].astype(float)/MeV)
 df.loc[(df.mass_excess_HFB_3d != 'nan'),'mass_HFB_3d']= df["A"].astype(float)+(df["mass_excess_HFB_3d"].astype(float)/MeV)
@@ -211,6 +216,8 @@ df.loc[(df.mass_excess_AME20 != 'nan'),'mass_AME20']= df["A"].astype(float)+(df[
 df.loc[(df.mass_excess_AME16 != 'nan'),'mass_AME16']= df["A"].astype(float)+(df["mass_excess_AME16"].astype(float)/MeV)
 df.loc[(df.mass_excess_FRDM != 'nan'),'mass_FRDM']= df["A"].astype(float)+(df["mass_excess_FRDM"].astype(float)/MeV)
 df.loc[(df.mass_excess_FRDM12 != 'nan'),'mass_FRDM12']= df["A"].astype(float)+(df["mass_excess_FRDM12"].astype(float)/MeV)
+
+#Create a fit passing through stable nuclei to determine if a nucleus is neutron rich or neutron deficient or stable
 stable=np.loadtxt("/Users/stynikas/Data/Stable_Nuclides.txt",unpack=True)
 popt, pcov = curve_fit(func, stable[0], stable[1])
 df["position_help"]=func(df["A"].astype(int),popt[0],popt[1],popt[2])
@@ -225,7 +232,8 @@ for i in range (0,len(stable[1])):
 input_data=df[((df['neutron_rich'] == "n-rich") & (df['extrapolated_AME16'] == "no")) | ((df['neutron_rich'] == "n-rich") & (df['extrapolated_AME16'] == "nan")) | ((df['neutron_rich'] == "n-rich") & (df['extrapolated_AME16'] == "yes"))]
         
         
-
+#loop over all compinations of reactions needed, skip the diagonal (i.e. (n,n) reaction) for all the mass models we included
+#create the corresponding columns in the dataframe and call the calculate_Qvalues routine to fill them
 reactions= ['a','n','p','g','2n']
 models=['AME20','AME16','FRDM','FRDM12','HFB_Skyrme','HFB_3d','HFB_D1m']
 for reaction_proj in reactions:
@@ -237,18 +245,22 @@ for reaction_proj in reactions:
             if model=='AME20' or model=='AME16':    
                 reaction_unc='reaction_unc_{}{}_{}'.format(reaction_proj,reaction_product,model)
                 df[reaction_unc]='nan'
+
+               
+#make sure the data where read as floats 
 df["mass_FRDM"].astype(float)
 df["mass_FRDM12"].astype(float)
 df["mass_AME20"].astype(float)
-
 df["mass_HFB_3d"].astype(float)
 df["Z"]=df["Z"].astype(int)
 df["A"]=df["A"].astype(int)
+
 for Z_num in range (0,110):
     for A_num in range(0,350):
         #(a,n)
         i=[df.index.values[(df['Z'] == Z_num) &(df['A'] == A_num)]]
         j=[df.index.values[(df['Z'] == (Z_num+2)) & (df['A'] == (A_num+3))]]
+        #i and j should be int numbers
         i = np.asarray(i, dtype=np.int32)
         j = np.asarray(j, dtype=np.int32)
         if i.size!=0:
