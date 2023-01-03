@@ -1,3 +1,6 @@
+# All the files needed to run this code and create a dataframe of reaction rates is located in the zipped folder.
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
