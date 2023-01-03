@@ -46,9 +46,9 @@ def calculate_Qvalues(reaction_proj,reaction_product,name,i,j,df):
                 daughter = (df[mass][j]+proton_mass)*MeV
             df.loc[[i],[name]]=parent-daughter
         except Exception as er:
-            print(er) 
-             
-        try:   
+            print(er)
+
+        try:
             if model in ('AME20','AME16'):
                 uncertainty = 'uncertainty_{}'.format(model)
                 target_sigma = df[uncertainty][i]
@@ -65,7 +65,7 @@ MeV=931.49432
 #use Fortran format to read the file mass16 containing AM16 data
 lformat=ff.FortranRecordReader('a1,i3,i5,i5,i5,1x,a3,a4,1x,a13,a11,a11,a9,1x,a2,a11,a9,1x,i3,1x,a12,a11')
 file1 = open('mass16.txt', 'r')
-#count helps to skip empty lines 
+#count helps to skip empty lines
 count = 0
 AME16=[]
 while True:
@@ -80,7 +80,7 @@ file1.close()
 file2 = open('mass20.txt','r')
 #use Fortran format to read the file mass16 containing AM20 data
 lformat=ff.FortranRecordReader('a1,i3,i5,i5,i5,1x,a3,a4,1x,a14,a12,a13,1x,a10,1x,a2,a13,a11,1x,i3,1x,a13,a12')
-#count helps to skip empty lines 
+#count helps to skip empty lines
 count = 0
 AME20=[]
 while True:
@@ -174,7 +174,7 @@ for i in range(0,len(HFB_ME)):
 
 for i in range(0,len(HFBD1m_ME)):
     df.loc[(df.Z == int(HFBD1m_Z[i])) & (df.A == int(HFBD1m_A[i])), 'mass_excess_HFB_D1m'] = HFBD1m_ME[i]
-    
+
 
 
 for i in range (0,len(AME16)):
@@ -191,7 +191,8 @@ for i in range (0,len(AME16)):
     #print(AME16[i][3],AME16[i][4],AME16[i][7],position)
     df.loc[(df.Z == int(AME16[i][3])) & (df.A == int(AME16[i][4])), "mass_excess_AME16" ]=AME16[i][7]
     df.loc[(df.Z == int(AME16[i][3])) & (df.A == int(AME16[i][4])), "uncertainty_AME16"]=AME16[i][8]
-
+# #is used to label extrapolated data, identify where this was peresent and Create
+# a column called extrapolated to note if the result is an actual measurement or not
 for i in range (0,len(AME20)):
     s=s+1
     position=df.index[(df.Z == int(AME20[i][3])) & (df.A == int(AME20[i][4]))]
@@ -207,7 +208,7 @@ for i in range (0,len(AME20)):
     df.loc[(df.Z == int(AME20[i][3])) & (df.A == int(AME20[i][4])), "uncertainty_AME20"]=AME20[i][8]
 
 
-df["neutron_rich"]="nan"
+
 #find the elements that are not nan and calculate mass for them
 df.loc[(df.mass_excess_HFB_D1m != 'nan'),'mass_HFB_D1m']= df["A"].astype(float)+(df["mass_excess_HFB_D1m"].astype(float)/MeV)
 df.loc[(df.mass_excess_HFB_Skyrme != 'nan'),'mass_HFB_Skyrme']= df["A"].astype(float)+(df["mass_excess_HFB_Skyrme"].astype(float)/MeV)
@@ -218,7 +219,8 @@ df.loc[(df.mass_excess_FRDM != 'nan'),'mass_FRDM']= df["A"].astype(float)+(df["m
 df.loc[(df.mass_excess_FRDM12 != 'nan'),'mass_FRDM12']= df["A"].astype(float)+(df["mass_excess_FRDM12"].astype(float)/MeV)
 
 #Create a fit passing through stable nuclei to determine if a nucleus is neutron rich or neutron deficient or stable
-stable=np.loadtxt("/Users/stynikas/Data/Stable_Nuclides.txt",unpack=True)
+stable=np.loadtxt("Stable_Nuclides.txt",unpack=True)
+df["neutron_rich"]="nan"
 popt, pcov = curve_fit(func, stable[0], stable[1])
 df["position_help"]=func(df["A"].astype(int),popt[0],popt[1],popt[2])
 df.loc[df["position_help"]<df["Z"].astype(float),"neutron_rich"]="p-rich"
@@ -230,8 +232,8 @@ for i in range (0,len(stable[1])):
     df["neutron_rich"][position]="stable"
 
 input_data=df[((df['neutron_rich'] == "n-rich") & (df['extrapolated_AME16'] == "no")) | ((df['neutron_rich'] == "n-rich") & (df['extrapolated_AME16'] == "nan")) | ((df['neutron_rich'] == "n-rich") & (df['extrapolated_AME16'] == "yes"))]
-        
-        
+
+
 #loop over all compinations of reactions needed, skip the diagonal (i.e. (n,n) reaction) for all the mass models we included
 #create the corresponding columns in the dataframe and call the calculate_Qvalues routine to fill them
 reactions= ['a','n','p','g','2n']
@@ -242,12 +244,12 @@ for reaction_proj in reactions:
             if reaction_proj!=reaction_product:
                 name='{}{}_{}'.format(reaction_proj,reaction_product,model)
                 df[name]='nan'
-            if model=='AME20' or model=='AME16':    
+            if model=='AME20' or model=='AME16':
                 reaction_unc='reaction_unc_{}{}_{}'.format(reaction_proj,reaction_product,model)
                 df[reaction_unc]='nan'
 
-               
-#make sure the data where read as floats 
+
+#make sure the data where read as floats
 df["mass_FRDM"].astype(float)
 df["mass_FRDM12"].astype(float)
 df["mass_AME20"].astype(float)
@@ -272,15 +274,15 @@ for Z_num in range (0,110):
 
             #(a,g)
             j=[df.index.values[(df['Z'] == (Z_num+2)) & (df['A'] == (A_num+4))]]
-            j = np.asarray(j, dtype=np.int32) 
-            if j.size!=0:     
+            j = np.asarray(j, dtype=np.int32)
+            if j.size!=0:
                 j=int(j[0])
                 df=calculate_Qvalues('a','g','ag',i,j,df)
-            
+
             #(a,n)
             j=[df.index.values[(df['Z'] == (Z_num+2)) & (df['A'] == (A_num+3))]]
             j = np.asarray(j, dtype=np.int32)
-            if j.size!=0:  
+            if j.size!=0:
                 j=int(j[0])
                 df=calculate_Qvalues('a','n','an',i,j,df)
 
@@ -326,5 +328,3 @@ for Z_num in range (0,110):
 
 df.to_pickle('Database_complete_updated.pkl')    #to save the dataframe, df to xxxxx.pkl file. See the pickle to csv to convert to a csv
 print(tabulate(df[['Z','A','mass_excess_AME16','mass_excess_AME20','g2n_AME20','reaction_unc_g2n_AME20','mass_excess_FRDM','mass_excess_FRDM12','mass_excess_HFB_D1m','mass_excess_HFB_Skyrme','mass_excess_HFB_3d']],tablefmt = 'psql'))
-
-
